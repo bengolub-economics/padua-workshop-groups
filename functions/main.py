@@ -99,6 +99,13 @@ def _people() -> list[dict[str, Any]]:
     ]
 
 
+def _run_from_store(snap) -> dict[str, Any]:
+    run = snap.to_dict()
+    if "groups" in run:
+        run["groups"] = [record["members"] for record in run["groups"]]
+    return {"id": snap.id, **run}
+
+
 def _clean_string(value: Any, label: str, limit: int, required: bool = True) -> str:
     if not isinstance(value, str):
         _error(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, f"{label} must be text")
@@ -147,7 +154,7 @@ def _state(uid: str, email: str, is_admin: bool) -> dict[str, Any]:
             "reflections": reflections,
             "preferences": pref,
             "runs": [
-                {"id": snap.id, **snap.to_dict()}
+                _run_from_store(snap)
                 for snap in root().collection("runs").order_by("createdAt", direction=firestore.Query.DESCENDING).limit(5).stream()
             ],
         }
@@ -241,7 +248,7 @@ def workshop_api(req: https_fn.CallableRequest) -> dict[str, Any]:
         run_snap = root().collection("runs").document(run_id).get()
         if not run_snap.exists:
             _error(https_fn.FunctionsErrorCode.NOT_FOUND, "Match run not found")
-        run = run_snap.to_dict()
+        run = _run_from_store(run_snap)
         people = _people()
         if run["inputHash"] != input_hash(people):
             _error(https_fn.FunctionsErrorCode.FAILED_PRECONDITION, "Responses changed; rerun matching")
@@ -290,5 +297,8 @@ def generate_groups(req: https_fn.CallableRequest) -> dict[str, Any]:
     result["participantCount"] = len(people)
     result["missingPreferences"] = [p["id"] for p in people if not p["wishes"]]
     ref = root().collection("runs").document()
-    ref.set(result)
+    stored = {**result}
+    if "groups" in stored:
+        stored["groups"] = [{"members": group} for group in stored["groups"]]
+    ref.set(stored)
     return {"id": ref.id, **result}
