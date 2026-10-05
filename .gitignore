@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+functions/venv/
+.venv/
+node_modules/
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
+*.csv
+*.jsonl
+participant-data/

@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All client operations go through authenticated callable functions.
+    // The Admin SDK in those functions is governed by Google IAM instead.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
