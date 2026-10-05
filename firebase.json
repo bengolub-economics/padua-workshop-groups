@@ -1,7 +1,8 @@
 {
   "functions": {
     "source": "functions",
-    "runtime": "python311"
+    "runtime": "python311",
+    "ignore": ["venv", ".venv", "__pycache__", "*.pyc", "firebase-debug.log", "firebase-debug.*.log"]
   },
   "firestore": {
     "rules": "firestore.rules"

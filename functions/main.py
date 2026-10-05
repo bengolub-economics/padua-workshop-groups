@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from secrets import SystemRandom
 from typing import Any
 
 from firebase_admin import firestore, initialize_app
@@ -139,8 +140,11 @@ def _state(uid: str, email: str, is_admin: bool) -> dict[str, Any]:
     if is_admin:
         profiles = _profiles()
         pref = _preferences()
+        reflections = [p["reflection"] for p in profiles if p.get("reflection")]
+        SystemRandom().shuffle(reflections)
         result["admin"] = {
-            "profiles": profiles,
+            "profiles": [{key: value for key, value in p.items() if key != "reflection"} for p in profiles],
+            "reflections": reflections,
             "preferences": pref,
             "runs": [
                 {"id": snap.id, **snap.to_dict()}
